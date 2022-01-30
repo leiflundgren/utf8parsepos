@@ -38,8 +38,152 @@ namespace utf8parsepos
     public static class UTF8_Parser
     {
        
+        /// <summary>
+        /// Parses the bytes in an array to characters
+        /// Aborts when all input is parsed or a parse-error happens.
+        /// </summary>
+        /// <param name="input">in byte array</param>
+        /// <param name="in_offset">offset</param>
+        /// <param name="in_count"></param>
+        /// <param name="out_data">array to fill with parsed characters</param>
+        /// <param name="out_offset"></param>
+        /// <param name="char_positions">array to fill with byte-position of the characters. Should have same length as out_data</param>
+        /// <param name="char_pos_offset"></param>
+        /// <param name="out_length"></param>
+        /// <returns>number of successfullly parsed characters</returns>
+        public static int Parse(byte[] input, int in_offset, int in_count, char[] out_data, int out_offset, int[] char_positions, int char_pos_offset, int out_length)
+        {
+            const byte EOS_filler = (byte)0xff;
+            if (in_count <= 0)
+                return 0;
+             
+            // these bytes is our sliding window into input.
+            // That will cause us to use an offset of 3 in lots of places.
+            byte b0=0, b1=0, b2=0, b3=0;
 
-        public static (char, int) Parse(byte b0, byte b1, byte b2, byte b3)
+            b0 = input[0];
+            if (in_count > 1)
+                b1 = input[1];
+            if (in_count > 2)
+                b2 = input[2];
+            if (in_count > 3)
+                b3 = input[3];
+
+            int chr_int;
+            int byte_cnt;
+
+            int in_pos;
+            int char_pos; // position of char in input-array
+            int out_pos; // where to write output
+            int i, max, in_max; // i goes 0--max, but input is -3
+            for ( i = 0, in_pos = in_offset+3, out_pos = out_offset, char_pos = in_offset, in_max = in_offset + in_count, max = in_max + 3; ; ++i, ++out_pos)
+            {
+                if (in_pos >= max)
+                    return i; // we have consumed all bytes, now only EOF-filler in byte-window
+
+                char c0 = (char)b0;
+                char c1 = (char)b1;
+                char c2 = (char)b2;
+                char c3 = (char)b3;
+
+
+                (chr_int, byte_cnt) = Parse(b0, b1, b2, b3);
+                if (chr_int < 0)
+                    return i;
+
+                char chr = (char)chr_int;
+                out_data[out_pos] = chr;
+                char_positions[out_pos] = char_pos;
+
+                char_pos += byte_cnt;
+                ++in_pos;
+
+                // rolled out for-loop
+                switch (byte_cnt)
+                {
+                    case 1:
+                        b0 = b1;
+                        b1 = b2;
+                        b2 = b3;
+                        b3 = in_pos < in_max ? input[in_pos] : EOS_filler;
+                        break;
+                    case 2:
+                        b0 = b2;
+                        b1 = b3;
+                        if (in_pos + 1 < in_max)
+                        {
+                            b2 = input[in_pos];
+                            b3 = input[++in_pos];
+                        }
+                        else
+                        {
+                            b2 = EOS_filler;
+                            b3 = EOS_filler;
+                        }
+                        break;
+                    case 3:
+                        b0 = b3;
+                        if (in_pos + 2 < in_max)
+                        {
+                            b1 = input[in_pos];
+                            b2 = input[++in_pos];
+                            b3 = input[++in_pos];
+                        }
+                        else
+                        {
+                            b1 = EOS_filler;
+                            b2 = EOS_filler;
+                            b3 = EOS_filler;
+                        }
+                        break;
+                    case 4:
+                        if (in_pos + 3 < in_max)
+                        {
+                            b0 = input[in_pos];
+                            b1 = input[++in_pos];
+                            b2 = input[++in_pos];
+                            b3 = input[++in_pos];
+                        }
+                        else
+                        {
+                            b0 = EOS_filler;
+                            b1 = EOS_filler;
+                            b2 = EOS_filler;
+                            b3 = EOS_filler;
+                        }
+                        break;
+                }
+                //for (int j = 0; j < byte_cnt; ++j, ++in_pos)
+                //{
+                //    b0 = b1;
+                //    b1 = b2;
+                //    b2 = b3;
+                //    b3 = in_pos < in_max ? input[in_pos] : EOS_filler;
+                //}
+            }
+
+            //// Run last three bytes.
+            //// Fill with 0xff, since that is a ilegal byte. So if the parser tries to use that, it fails controllably.
+            //for (int last = 0; last < 3; ++i, ++last, ++out_pos, ++char_pos)
+            //{
+            //    b0 = b1;
+            //    b1 = b2;
+            //    b2 = b3;
+            //    b3 = 0xFF;
+            //    (chr, byte_cnt) = Parse(b0, b1, b2, b3);
+            //    if (chr < 0)
+            //        return i;
+
+            //    out_data[out_pos] = (char)chr;
+            //    char_positions[char_pos] = char_pos;
+
+            //    in_pos += byte_cnt;
+            //}
+
+//            return i; // 
+        }
+
+        public static (int, int) Parse(byte b0, byte b1, byte b2, byte b3)
         {
             // UTF8-1      = 0x00-7F
             if (b0 <= 0x7f)
@@ -60,7 +204,7 @@ namespace utf8parsepos
             || b0 == 0xF4 && 0x80 <= b1 && b1 <= 0x8F) // 0xF4 0x80 0x8F 2(UTF8 -tail ) )
                 return (Parse4Bytes(b0, b1, b2, b3), 4);
 
-            return ('\0', 1); // invalid, filler.
+            return (-1, 1); // invalid, filler.
         }
 
 
