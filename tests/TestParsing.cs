@@ -23,10 +23,10 @@ namespace utf8parsepos.tests
 
                 Assert.AreEqual(c, Encoding.UTF8.GetString(buf, 0, bytes)[0], "System UTF8 decoder fail");
 
-                (int parsed_c, int used_bytes) = UTF8_Parser.Parse(buf[0], buf[1], buf[2], buf[3]);
+                (char parsed_c, int used_bytes) = new Parser().Parse(buf[0], buf[1], buf[2], buf[3]);
 
                 Assert.AreNotEqual(-1, parsed_c, $"Failed to parse n={i}");
-                Assert.AreEqual(c, (char)parsed_c, $"Got wrong char back n={i}");
+                Assert.AreEqual(c, parsed_c, $"Got wrong char back n={i}");
                 Assert.AreEqual(bytes, used_bytes, $"Unexpected read-length n={i}");
             }
         }
@@ -40,7 +40,7 @@ namespace utf8parsepos.tests
             char[] characters = new char[Encoding.UTF8.GetMaxByteCount(bytes.Length)];
             int[] positions = new int[Encoding.UTF8.GetMaxByteCount(bytes.Length)];
 
-            int count = UTF8_Parser.Parse(bytes, 0, bytes.Length, characters, 0, positions, 0, characters.Length);
+            int count = new Parser().Parse(bytes, 0, bytes.Length, characters, 0, positions, 0, characters.Length);
             string actual = new string(characters, 0, count);
 
             Assert.AreEqual(expected, actual);
@@ -56,7 +56,7 @@ namespace utf8parsepos.tests
             char[] characters = new char[Encoding.UTF8.GetMaxByteCount(bytes.Length)];
             int[] positions = new int[Encoding.UTF8.GetMaxByteCount(bytes.Length)];
 
-            int count = UTF8_Parser.Parse(bytes, 0, bytes.Length, characters, 0, positions, 0, characters.Length);
+            int count = new Parser().Parse(bytes, 0, bytes.Length, characters, 0, positions, 0, characters.Length);
             string actual = new string(characters, 0, count);
 
             Assert.AreEqual(expected, actual);
@@ -97,7 +97,7 @@ raksmorgas";
             char[] characters = new char[Encoding.UTF8.GetMaxByteCount(bytes.Length)];
             int[] positions = new int[Encoding.UTF8.GetMaxByteCount(bytes.Length)];
 
-            int count = UTF8_Parser.Parse(bytes, 0, bytes.Length, characters, 0, positions, 0, characters.Length);
+            int count = new Parser().Parse(bytes, 0, bytes.Length, characters, 0, positions, 0, characters.Length);
 
             int pos_newport = SearchArray("Newport".ToCharArray(), characters, 0, count);
             int byte_pos_newport = positions[pos_newport];

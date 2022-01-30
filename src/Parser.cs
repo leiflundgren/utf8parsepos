@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -35,9 +36,30 @@ namespace utf8parsepos
     /// </summary>
 
 
-    public static class UTF8_Parser
+    public class Parser
     {
-       
+
+        public bool ThrowOnParseError = false;
+
+        public class Exception : System.Exception
+        {
+            public Exception(int pos, byte b0, byte b1, byte b2, byte b3)
+                : base($"Failed to parse character at byte-pos {pos} bytes: [ 0x{b0.ToString("02x")}, 0x{b1.ToString("02x")}, 0x{b2.ToString("02x")}, 0x{b3.ToString("02x")} ]")
+            { }
+
+            public Exception() : base()
+            {}
+
+            public Exception(string message) : base(message)
+            {}
+
+            public Exception(string message, System.Exception innerException) : base(message, innerException)
+            {}
+
+            protected Exception(SerializationInfo info, StreamingContext context) : base(info, context)
+            {}
+        }
+
         /// <summary>
         /// Parses the bytes in an array to characters
         /// Aborts when all input is parsed or a parse-error happens.
@@ -51,7 +73,7 @@ namespace utf8parsepos
         /// <param name="char_pos_offset"></param>
         /// <param name="out_length"></param>
         /// <returns>number of successfullly parsed characters</returns>
-        public static int Parse(byte[] input, int in_offset, int in_count, char[] out_data, int out_offset, int[] char_positions, int char_pos_offset, int out_length)
+        public int Parse(byte[] input, int in_offset, int in_count, char[] out_data, int out_offset, int[] char_positions, int char_pos_offset, int out_length)
         {
             const byte EOS_filler = (byte)0xff;
             if (in_count <= 0)
@@ -69,9 +91,7 @@ namespace utf8parsepos
             if (in_count > 3)
                 b3 = input[3];
 
-            int chr_int;
-            int byte_cnt;
-
+            
             int in_pos;
             int char_pos; // position of char in input-array
             int out_pos; // where to write output
@@ -81,11 +101,10 @@ namespace utf8parsepos
                 if (in_pos >= max)
                     return i; // we have consumed all bytes, now only EOF-filler in byte-window
 
-                (chr_int, byte_cnt) = Parse(b0, b1, b2, b3);
-                if (chr_int < 0)
+                (char chr, int byte_cnt) = Parse(in_pos-3, b0, b1, b2, b3);
+                if (byte_cnt == 0)
                     return i;
 
-                char chr = (char)chr_int;
                 out_data[out_pos] = chr;
                 char_positions[out_pos] = char_pos;
 
@@ -151,7 +170,25 @@ namespace utf8parsepos
 
         }
 
-        public static (int, int) Parse(byte b0, byte b1, byte b2, byte b3)
+        public static (char, int) ReturnValueForInvalidInput = ('\uffff', 0);
+
+        /// <summary>
+        /// Parses a single utf8 character
+        /// </summary>
+        /// <param name="b0">Byte 0</param>
+        /// <param name="b1">Byte 1</param>
+        /// <param name="b2">Byte 2</param>
+        /// <param name="b3">Byte 3</param>
+        /// <returns>
+        /// Tuple (character parsed, number of bytes consumed)
+        /// If pasing fails (ilegal character) then 0 bytes is considered consumed.
+        /// </returns>
+
+        public (char, int) Parse(byte b0, byte b1, byte b2, byte b3)
+        {
+            return Parse(-1, b0, b1, b2, b3);
+        }
+        private (char, int) Parse(int byte_pos, byte b0, byte b1, byte b2, byte b3)
         {
             switch (b0)
             {
@@ -327,7 +364,7 @@ namespace utf8parsepos
                 //UTF8-3  = 
                 case 0xE0:
                     // 0xE0 0xA0-BF UTF8-tail 
-                    return (0xA0 <= b1 && b1 <= 0xBF) ? (Parse3Bytes(b0, b1, b2), 3) : (-1, 1);
+                    return (0xA0 <= b1 && b1 <= 0xBF) ? (Parse3Bytes(b0, b1, b2), 3) : Failed(byte_pos, b0, b1, b2, b3);
                 
                 // 0xE1-EC 2(UTF8-tail )
                 case 0xE1:
@@ -345,7 +382,7 @@ namespace utf8parsepos
                     return (Parse3Bytes(b0, b1, b2), 3);
                 case 0xED:
                     // 0xED 0x80-9F UTF8-tail
-                    return (0x80 <= b1 && b1 <= 0x9F) ? (Parse3Bytes(b0, b1, b2), 3) : (-1, 1);
+                    return (0x80 <= b1 && b1 <= 0x9F) ? (Parse3Bytes(b0, b1, b2), 3) : Failed(byte_pos, b0, b1, b2, b3);
                 //  0xEE-EF 2(UTF8-tail )
                 case 0xEE:
                 case 0xEF:
@@ -355,7 +392,7 @@ namespace utf8parsepos
 
                 // 0xF0 0x90-BF 2(UTF8-tail )
                 case 0xF0:
-                    return  (0x90 <= b1 && b1 <= 0xBF) ? (Parse4Bytes(b0, b1, b2, b3), 4) : (-1, 1);
+                    return  (0x90 <= b1 && b1 <= 0xBF) ? (Parse4Bytes(b0, b1, b2, b3), 4) : Failed(byte_pos, b0, b1, b2, b3);
                 // 0xF1 0xF3 3(UTF8 -tail )
                 case 0xF1:
                 case 0xF2:
@@ -363,13 +400,22 @@ namespace utf8parsepos
                     return (Parse4Bytes(b0, b1, b2, b3), 4);
                 // 0xF4 0x80 0x8F 2(UTF8 -tail ) )
                 case 0xF4:
-                    return  (0x80 <= b1 && b1 <= 0x8F) ? (Parse4Bytes(b0, b1, b2, b3), 4) : (-1, 1);
+                    return  (0x80 <= b1 && b1 <= 0x8F) ? (Parse4Bytes(b0, b1, b2, b3), 4) : Failed(byte_pos, b0, b1, b2, b3);
                 default:
-                    return (-1, 1); // invalid
+                    return ReturnValueForInvalidInput; // invalid
             }
 
 
         }
+
+        private (char, int) Failed(int pos, byte b0, byte b1, byte b2, byte b3)
+        {
+            if (ThrowOnParseError)
+                throw new Exception(pos, b0, b1, b2, b3);
+            else
+                return ReturnValueForInvalidInput;
+        }
+
 
 #if DEBUG
         /// <summary>
@@ -401,7 +447,7 @@ namespace utf8parsepos
             || b0 == 0xF4 && 0x80 <= b1 && b1 <= 0x8F) // 0xF4 0x80 0x8F 2(UTF8 -tail ) )
                 return (Parse4Bytes(b0, b1, b2, b3), 4);
 
-            return (-1, 1); // invalid, filler.
+            return ReturnValueForInvalidInput; // invalid, filler.
         }
 #endif
 
@@ -467,6 +513,7 @@ namespace utf8parsepos
 
 
             uint n = bs0 | bs1 | bs2 | bs3;
+            // If the value is in UTF32, we need help from System.Text
             return n < 65535 ? (char)n : Encoding.UTF32.GetString(BitConverter.GetBytes(n))[0];
         }
 
