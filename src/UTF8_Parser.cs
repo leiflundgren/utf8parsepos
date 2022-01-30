@@ -81,12 +81,6 @@ namespace utf8parsepos
                 if (in_pos >= max)
                     return i; // we have consumed all bytes, now only EOF-filler in byte-window
 
-                char c0 = (char)b0;
-                char c1 = (char)b1;
-                char c2 = (char)b2;
-                char c3 = (char)b3;
-
-
                 (chr_int, byte_cnt) = Parse(b0, b1, b2, b3);
                 if (chr_int < 0)
                     return i;
@@ -153,37 +147,240 @@ namespace utf8parsepos
                         }
                         break;
                 }
-                //for (int j = 0; j < byte_cnt; ++j, ++in_pos)
-                //{
-                //    b0 = b1;
-                //    b1 = b2;
-                //    b2 = b3;
-                //    b3 = in_pos < in_max ? input[in_pos] : EOS_filler;
-                //}
             }
 
-            //// Run last three bytes.
-            //// Fill with 0xff, since that is a ilegal byte. So if the parser tries to use that, it fails controllably.
-            //for (int last = 0; last < 3; ++i, ++last, ++out_pos, ++char_pos)
-            //{
-            //    b0 = b1;
-            //    b1 = b2;
-            //    b2 = b3;
-            //    b3 = 0xFF;
-            //    (chr, byte_cnt) = Parse(b0, b1, b2, b3);
-            //    if (chr < 0)
-            //        return i;
-
-            //    out_data[out_pos] = (char)chr;
-            //    char_positions[char_pos] = char_pos;
-
-            //    in_pos += byte_cnt;
-            //}
-
-//            return i; // 
         }
 
         public static (int, int) Parse(byte b0, byte b1, byte b2, byte b3)
+        {
+            switch (b0)
+            {
+                // UTF8-1      = 0x00-7F
+                #region 0x00--7F
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x04:
+                case 0x05:
+                case 0x06:
+                case 0x07:
+                case 0x08:
+                case 0x09:
+                case 0x0A:
+                case 0x0B:
+                case 0x0C:
+                case 0x0D:
+                case 0x0E:
+                case 0x0F:
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x14:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                case 0x18:
+                case 0x19:
+                case 0x1A:
+                case 0x1B:
+                case 0x1C:
+                case 0x1D:
+                case 0x1E:
+                case 0x1F:
+                case 0x20:
+                case 0x21:
+                case 0x22:
+                case 0x23:
+                case 0x24:
+                case 0x25:
+                case 0x26:
+                case 0x27:
+                case 0x28:
+                case 0x29:
+                case 0x2A:
+                case 0x2B:
+                case 0x2C:
+                case 0x2D:
+                case 0x2E:
+                case 0x2F:
+                case 0x30:
+                case 0x31:
+                case 0x32:
+                case 0x33:
+                case 0x34:
+                case 0x35:
+                case 0x36:
+                case 0x37:
+                case 0x38:
+                case 0x39:
+                case 0x3A:
+                case 0x3B:
+                case 0x3C:
+                case 0x3D:
+                case 0x3E:
+                case 0x3F:
+                case 0x40:
+                case 0x41:
+                case 0x42:
+                case 0x43:
+                case 0x44:
+                case 0x45:
+                case 0x46:
+                case 0x47:
+                case 0x48:
+                case 0x49:
+                case 0x4A:
+                case 0x4B:
+                case 0x4C:
+                case 0x4D:
+                case 0x4E:
+                case 0x4F:
+                case 0x50:
+                case 0x51:
+                case 0x52:
+                case 0x53:
+                case 0x54:
+                case 0x55:
+                case 0x56:
+                case 0x57:
+                case 0x58:
+                case 0x59:
+                case 0x5A:
+                case 0x5B:
+                case 0x5C:
+                case 0x5D:
+                case 0x5E:
+                case 0x5F:
+                case 0x60:
+                case 0x61:
+                case 0x62:
+                case 0x63:
+                case 0x64:
+                case 0x65:
+                case 0x66:
+                case 0x67:
+                case 0x68:
+                case 0x69:
+                case 0x6A:
+                case 0x6B:
+                case 0x6C:
+                case 0x6D:
+                case 0x6E:
+                case 0x6F:
+                case 0x70:
+                case 0x71:
+                case 0x72:
+                case 0x73:
+                case 0x74:
+                case 0x75:
+                case 0x76:
+                case 0x77:
+                case 0x78:
+                case 0x79:
+                case 0x7A:
+                case 0x7B:
+                case 0x7C:
+                case 0x7D:
+                case 0x7E:
+                case 0x7F:
+                    #endregion
+                    return ((char)b0, 1);
+
+
+                // UTF8-2      = 0xC2-DF UTF8-tail
+                #region 0xC2--DF
+                case 0xC2:
+                case 0xC3:
+                case 0xC4:
+                case 0xC5:
+                case 0xC6:
+                case 0xC7:
+                case 0xC8:
+                case 0xC9:
+                case 0xCA:
+                case 0xCB:
+                case 0xCC:
+                case 0xCD:
+                case 0xCE:
+                case 0xCF:
+                case 0xD0:
+                case 0xD1:
+                case 0xD2:
+                case 0xD3:
+                case 0xD4:
+                case 0xD5:
+                case 0xD6:
+                case 0xD7:
+                case 0xD8:
+                case 0xD9:
+                case 0xDA:
+                case 0xDB:
+                case 0xDC:
+                case 0xDD:
+                case 0xDE:
+                case 0xDF:
+                    #endregion
+                    return (Parse2Bytes(b0, b1), 2);
+
+                //UTF8-3  = 
+                case 0xE0:
+                    // 0xE0 0xA0-BF UTF8-tail 
+                    return (0xA0 <= b1 && b1 <= 0xBF) ? (Parse3Bytes(b0, b1, b2), 3) : (-1, 1);
+                
+                // 0xE1-EC 2(UTF8-tail )
+                case 0xE1:
+                case 0xE2:
+                case 0xE3:
+                case 0xE4:
+                case 0xE5:
+                case 0xE6:
+                case 0xE7:
+                case 0xE8:
+                case 0xE9:
+                case 0xEA:
+                case 0xEB:
+                case 0xEC:
+                    return (Parse3Bytes(b0, b1, b2), 3);
+                case 0xED:
+                    // 0xED 0x80-9F UTF8-tail
+                    return (0x80 <= b1 && b1 <= 0x9F) ? (Parse3Bytes(b0, b1, b2), 3) : (-1, 1);
+                //  0xEE-EF 2(UTF8-tail )
+                case 0xEE:
+                case 0xEF:
+                    return (Parse3Bytes(b0, b1, b2), 3);
+
+                //UTF8-4 
+
+                // 0xF0 0x90-BF 2(UTF8-tail )
+                case 0xF0:
+                    return  (0x90 <= b1 && b1 <= 0xBF) ? (Parse4Bytes(b0, b1, b2, b3), 4) : (-1, 1);
+                // 0xF1 0xF3 3(UTF8 -tail )
+                case 0xF1:
+                case 0xF2:
+                case 0xF3:
+                    return (Parse4Bytes(b0, b1, b2, b3), 4);
+                // 0xF4 0x80 0x8F 2(UTF8 -tail ) )
+                case 0xF4:
+                    return  (0x80 <= b1 && b1 <= 0x8F) ? (Parse4Bytes(b0, b1, b2, b3), 4) : (-1, 1);
+                default:
+                    return (-1, 1); // invalid
+            }
+
+
+        }
+
+#if DEBUG
+        /// <summary>
+        /// Unreachable code, saved for reference
+        /// </summary>
+        /// <param name="b0"></param>
+        /// <param name="b1"></param>
+        /// <param name="b2"></param>
+        /// <param name="b3"></param>
+        /// <returns></returns>
+        private static (int, int) Parse_method_using_ifs(byte b0, byte b1, byte b2, byte b3)
         {
             // UTF8-1      = 0x00-7F
             if (b0 <= 0x7f)
@@ -206,7 +403,7 @@ namespace utf8parsepos
 
             return (-1, 1); // invalid, filler.
         }
-
+#endif
 
         private const byte bitfilter_2bytes_0 = 0x1f;
         private const byte bitfilter_2bytes_1 = 0x3f;
