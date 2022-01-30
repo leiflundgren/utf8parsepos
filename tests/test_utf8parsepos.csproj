@@ -8,7 +8,7 @@
     <ProjectGuid>{5E29241A-D080-4021-8201-50188038A019}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>tests</RootNamespace>
+    <RootNamespace>utf8parsepos.tests</RootNamespace>
     <AssemblyName>utf8parsepos.tests</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

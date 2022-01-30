@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.32106.194
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "utf8parsepos", "src\utf8parsepos.csproj", "{0C5E0724-3E84-4726-ADEB-721E68F27183}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "tests\tests.csproj", "{5E29241A-D080-4021-8201-50188038A019}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test_utf8parsepos", "tests\test_utf8parsepos.csproj", "{5E29241A-D080-4021-8201-50188038A019}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
