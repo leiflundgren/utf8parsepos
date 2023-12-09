@@ -6,7 +6,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5E29241A-D080-4021-8201-50188038A019}</ProjectGuid>
+    <ProjectGuid>{06A38919-B740-4303-B325-0895A7A36706}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>utf8parsepos.tests</RootNamespace>
